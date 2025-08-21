@@ -1,0 +1,133 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Club {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  shortName   String?
+  logo        String?
+  country     String?
+  league      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  articles    Article[]
+  fixtures   Fixture[]
+  
+  @@map("clubs")
+}
+
+model Article {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  excerpt     String?
+  content     String
+  image       String?
+  published   Boolean  @default(false)
+  featured    Boolean  @default(false)
+  views       Int      @default(0)
+  author      String?
+  tags        String[]
+  clubId      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  publishedAt DateTime?
+  
+  // Relations
+  club        Club?    @relation(fields: [clubId], references: [id])
+  
+  @@map("articles")
+}
+
+model LiveGame {
+  id          String   @id @default(cuid())
+  title       String
+  homeTeam    String
+  awayTeam    String
+  youtubeUrl  String
+  matchDate   DateTime
+  status      GameStatus @default(UPCOMING)
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("live_games")
+}
+
+model League {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  country     String?
+  logo        String?
+  season      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  fixtures    Fixture[]
+  
+  @@map("leagues")
+}
+
+model Fixture {
+  id          String   @id @default(cuid())
+  homeTeam    String
+  awayTeam    String
+  homeScore   Int?
+  awayScore   Int?
+  matchDate   DateTime
+  status      FixtureStatus @default(SCHEDULED)
+  leagueId    String
+  clubId      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  league      League   @relation(fields: [leagueId], references: [id])
+  club        Club?    @relation(fields: [clubId], references: [id])
+  
+  @@map("fixtures")
+}
+
+model AdminUser {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  pin       String
+  role      AdminRole @default(EDITOR)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("admin_users")
+}
+
+enum GameStatus {
+  UPCOMING
+  LIVE
+  FINISHED
+}
+
+enum FixtureStatus {
+  SCHEDULED
+  LIVE
+  FINISHED
+  CANCELLED
+}
+
+enum AdminRole {
+  EDITOR
+  ADMIN
+}
